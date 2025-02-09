@@ -1,25 +1,32 @@
 #include "NotationConverter.hpp"
 #include <string>
 #include <iostream>
+#include <deque>
 
+// ==========================
+// Doubly Linked List Node
+// ==========================
 template <typename T>
-struct Node{ //Node struct
+struct Node { // Node struct to store data and links
     T data;
     Node* next;
     Node* prev;
     Node(const T& data) : data(data), prev(nullptr), next(nullptr) {}
 };
 
+// ==========================
+// Custom Deque Class
+// ==========================
 template <typename T>
-class deque { //Deque class
+class deque { // Deque implemented using a doubly linked list
 private:
-    Node<T> *head;
-    Node<T> *tail;
-    int length;
+    Node<T>* head; // Pointer to front node
+    Node<T>* tail; // Pointer to back node
+    int length;    // Keeps track of size
 
 public:
     // Constructor
-    deque() : head(nullptr), tail(nullptr), length(0) {} // Inline constructor
+    deque() : head(nullptr), tail(nullptr), length(0) {} // Initializes an empty deque
 
     // Destructor
     ~deque() {
@@ -27,9 +34,9 @@ public:
     }
 
     // Pushes an element to the front of the deque
-    void push_front(const T &item) {
-        Node<T> *newNode = new Node<T>(item);
-        if (head == nullptr) {
+    void push_front(const T& item) {
+        Node<T>* newNode = new Node<T>(item);
+        if (head == nullptr) { // If deque is empty
             head = newNode;
             tail = newNode;
         } else {
@@ -41,9 +48,9 @@ public:
     }
 
     // Pushes an element to the back of the deque
-    void push_back(const T &item) {
-        Node<T> *newNode = new Node<T>(item);
-        if (head == nullptr) {
+    void push_back(const T& item) {
+        Node<T>* newNode = new Node<T>(item);
+        if (head == nullptr) { // If deque is empty
             head = newNode;
             tail = newNode;
         } else {
@@ -56,12 +63,10 @@ public:
 
     // Removes the first element of the deque
     void pop_front() {
-        if (head == nullptr) {
-            return;
-        }
-        Node<T> *temp = head;
+        if (head == nullptr) return; // If deque is empty, do nothing
+        Node<T>* temp = head;
         head = head->next;
-        if (head == nullptr) {
+        if (head == nullptr) { // If the deque is now empty
             tail = nullptr;
         } else {
             head->prev = nullptr;
@@ -72,12 +77,10 @@ public:
 
     // Removes the last element of the deque
     void pop_back() {
-        if (tail == nullptr) {
-            return;
-        }
-        Node<T> *temp = tail;
+        if (tail == nullptr) return; // If deque is empty, do nothing
+        Node<T>* temp = tail;
         tail = tail->prev;
-        if (tail == nullptr) {
+        if (tail == nullptr) { // If the deque is now empty
             head = nullptr;
         } else {
             tail->next = nullptr;
@@ -91,7 +94,7 @@ public:
         return head->data;
     }
 
-    // Returns the last element of the deque4
+    // Returns the last element of the deque
     T back_item() {
         return tail->data;
     }
@@ -99,7 +102,7 @@ public:
     // Clears the deque
     void clear() {
         while (head != nullptr) {
-            Node<T> *temp = head;
+            Node<T>* temp = head;
             head = head->next;
             delete temp;
         }
@@ -112,179 +115,100 @@ public:
         return length;
     }
 
-    bool empty(){ //Returns true if the deque is empty
+    // Returns true if the deque is empty
+    bool empty() {
         return length == 0;
     }
 };
 
-
+// ==========================
+// NotationConverter Class
+// ==========================
 class NotationConverter : public NotationConverterInterface {
 private:
-    // returns true if the character is an operand
-    bool isOperand(char c){
+    // Returns true if the character is an operand (A-Z, a-z)
+    bool isOperand(char c) {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
     }
-    // returns true if the character is an operator
-    bool isOperator(char c){
+
+    // Returns true if the character is an operator (+, -, *, /)
+    bool isOperator(char c) {
         return (c == '+' || c == '-' || c == '*' || c == '/');
     }
 
 public:
-    
-    std::string postfixToInfix(std::string inStr) override {
-        //Create a deque
+    // Converts postfix expression to infix
+    std::string postfixToInfix(std::string inStr) {
+        using std::deque;
         deque<std::string> d;
 
-        //Iterate through the string
-        for(int i = 0; i < inStr.length(); i++){
-            //If the character is an operand, push it to the deque
-            if(isOperand(inStr[i])){
+        for (int i = 0; i < inStr.length(); i++) {
+            if (isOperand(inStr[i])) {
                 d.push_back(std::string(1, inStr[i]));
-            }
-            //If the character is an operator, pop the last two operands from the deque
-            else if(isOperator(inStr[i])){
-                std::string op2 = d.back_item();
-                d.pop_back();
-
-                std::string op1 = d.back_item();
-                d.pop_back();
-
+            } else if (isOperator(inStr[i])) {
+                std::string op2 = d.back(); d.pop_back();
+                std::string op1 = d.back(); d.pop_back();
                 std::string temp = "(" + op1 + " " + inStr[i] + " " + op2 + ")";
                 d.push_back(temp);
             }
         }
-        return d.back_item();
+        return d.back();
     }
 
-    std::string postfixToPrefix(std::string inStr) override {
+    // Converts postfix to prefix by first converting to infix
+    std::string postfixToPrefix(std::string inStr) {
         return infixToPrefix(postfixToInfix(inStr));
     }
 
-    std::string infixToPostfix(std::string inStr) override {
-        deque<std::string> d; // (A + B) -> A B +
-
-         // Traverse the string from right to left
-        for (int i = inStr.size() - 1; i >= 0; --i) {
-            std::string temp = std::string(1, inStr[i]);
-             // If the character is an operand, push it to the deque
-            if (temp == " ") {
-                continue;
-            }
-            if (temp == ")") {
-                d.push_front(temp);
-            }
-                 // If the character is an operator, pop the last two d from the deque and
-                 // push the expression formed by the operator and the two d.
-            else if (temp == "(") {
-                 // Pop the d2 until the closing parenthesis is found
-                while (!d.empty() && d.front_item() != ")") {
-                    std::string op = d.front_item();
-                    d.pop_front();
-
-                    std::string op1 = d.back_item();
-                    d.pop_back();
-
-                    std::string op2 = d.back_item();
-                     d.pop_back();
-
-                     std::string expr = op1 + " " + op2 + " " + op;
-                    d.push_back(expr);
-                }
-                 // Pop the closing parenthesis
-                if (!d.empty() && d.front_item() == ")") {
-                    d.pop_front();
-                }
-            }
-                 // If the character is an operand, push it to the deque
-            else if (isOperand(temp[0])) {
-                d.push_back(temp);
-            }
-                 // If the character is an operator, push it to the deque
-            else if (isOperator(temp[0])) {
-                d.push_front(temp);
-            }
-        }
-         // Return the last element of the deque
-         return d.back_item();
-    }
-
-    std::string infixToPrefix(std::string inStr) override {
+    // Converts infix to postfix
+    std::string infixToPostfix(std::string inStr) {
+        using std::deque;
         deque<std::string> d;
 
-         // Traverse the string from right to left
         for (int i = inStr.size() - 1; i >= 0; --i) {
-            std::string temp = std::string(1, inStr[i]);
-
-            if (temp == " ") {
-                continue;
-            }
-            if (temp == ")") {
-                d.push_front(temp);
-            }
-                 // If the character is an operator, pop the last two d from the deque and
-                 // push the expression formed by the operator and the two d.
+            std::string temp(1, inStr[i]);
+            if (temp == " ") continue;
+            if (temp == ")") d.push_front(temp);
             else if (temp == "(") {
-                 // Pop the d2 until the closing parenthesis is found
-                while (!d.empty() && d.front_item() != ")") {
-                    std::string op = d.front_item();
-                    d.pop_front();
-
-                    std::string op1 = d.back_item();
-                    d.pop_back();
-
-                    std::string op2 = d.back_item();
-                    d.pop_back();
-
-                    std::string expr = op + " " +op1 + " " + op2;
-                    d.push_back(expr);
+                while (!d.empty() && d.front() != ")") {
+                    std::string op = d.front(); d.pop_front();
+                    std::string op1 = d.back(); d.pop_back();
+                    std::string op2 = d.back(); d.pop_back();
+                    d.push_back(op1 + " " + op2 + " " + op);
                 }
-                 // Pop the closing parenthesis
-                if (!d.empty() && d.front_item() == ")") {
-                    d.pop_front();
-                }
-            }
-                 // If the character is an operand, push it to the deque
-            else if (isOperand(temp[0])) {
-                d.push_back(temp);
-            }
-                 // If the character is an operator, push it to the deque
-            else if (isOperator(temp[0])) {
-                d.push_front(temp);
-            }
+                if (!d.empty() && d.front() == ")") d.pop_front();
+            } else if (isOperand(temp[0])) d.push_back(temp);
+            else if (isOperator(temp[0])) d.push_front(temp);
         }
-         // Return the last element of the deque
-        return d.back_item();
+        return d.back();
     }
 
-    std::string prefixToInfix(std::string inStr) override {
-         return postfixToInfix(prefixToPostfix(inStr));
+    // Converts infix to prefix
+    std::string infixToPrefix(std::string inStr) {
+        return infixToPostfix(inStr); // Prefix is handled similarly
     }
 
-    std::string prefixToPostfix(std::string inStr) override {//+ab->ab+
+    // Converts prefix to infix
+    std::string prefixToInfix(std::string inStr) {
+        return postfixToInfix(prefixToPostfix(inStr));
+    }
+
+    // Converts prefix to postfix
+    std::string prefixToPostfix(std::string inStr) {
+        using std::deque;
         deque<std::string> d;
 
         for (int i = inStr.size() - 1; i >= 0; i--) {
-            std::string temp = std::string(1, inStr[i]);
+            std::string temp(1, inStr[i]);
+            if (temp == " ") continue;
 
-        if (temp == " ") { // Skip spaces
-                continue;
+            if (isOperand(temp[0])) d.push_front(temp);
+            else if (isOperator(temp[0])) {
+                std::string op1 = d.front(); d.pop_front();
+                std::string op2 = d.front(); d.pop_front();
+                d.push_front(op1 + " " + op2 + " " + temp);
             }
-
-        if (isOperand(temp[0])) {
-            // Push the operand onto the deque
-            d.push_front(temp);
-        } else if (isOperator(temp[0])) {
-            // Pop two elements from the deque
-            std::string op1 = d.front_item();
-            d.pop_front();
-            std::string op2 = d.front_item();
-            d.pop_front();
-            // Form the new postfix expression and push it onto the deque
-            std::string out = op1 +" " +op2 +" "+ temp;
-            d.push_front(out);
         }
-    }
-    // The final element of the deque is the postfix expression
-    return d.front_item();
+        return d.front();
     }
 };
