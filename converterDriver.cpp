@@ -1,214 +1,75 @@
 #include "NotationConverter.hpp"
-#include <string>
+#include "NotationConverter.cpp"
 #include <iostream>
-#include <deque>
+#include <cassert>
+using namespace std;
 
-// ==========================
-// Doubly Linked List Node
-// ==========================
-template <typename T>
-struct Node { // Node struct to store data and links
-    T data;
-    Node* next;
-    Node* prev;
-    Node(const T& data) : data(data), prev(nullptr), next(nullptr) {}
-};
+int main()
 
-// ==========================
-// Custom Deque Class
-// ==========================
-template <typename T>
-class deque { // Deque implemented using a doubly linked list
-private:
-    Node<T>* head; // Pointer to front node
-    Node<T>* tail; // Pointer to back node
-    int length;    // Keeps track of size
+{
+   const string infix1 = "(A + B) ";
+   const string infix2 = "((X + B) * (Y - D))";
+   const string infix3 = "(((A + B) / (X + Y)) - R)";
 
-public:
-    // Constructor
-    deque() : head(nullptr), tail(nullptr), length(0) {} // Initializes an empty deque
+   const string prefix1 = "+ / * x y g h";
+   const string prefix2 = "-    /  x  y  g"; // Multiple Spaces Between Letters and Operators
+   const string prefix3 = "- / x y * a b";
 
-    // Destructor
-    ~deque() {
-        clear();
-    }
+  const string postfix1 = "X Y + A B + *";
+  const string postfix2 = "V C +";
+  const string postfix3 = "H W * R Q - /";
 
-    // Pushes an element to the front of the deque
-    void push_front(const T& item) {
-        Node<T>* newNode = new Node<T>(item);
-        if (head == nullptr) { // If deque is empty
-            head = newNode;
-            tail = newNode;
-        } else {
-            newNode->next = head;
-            head->prev = newNode;
-            head = newNode;
-        }
-        ++length;
-    }
+  NotationConverter nc;
 
-    // Pushes an element to the back of the deque
-    void push_back(const T& item) {
-        Node<T>* newNode = new Node<T>(item);
-        if (head == nullptr) { // If deque is empty
-            head = newNode;
-            tail = newNode;
-        } else {
-            tail->next = newNode;
-            newNode->prev = tail;
-            tail = newNode;
-        }
-        ++length;
-    }
 
-    // Removes the first element of the deque
-    void pop_front() {
-        if (head == nullptr) return; // If deque is empty, do nothing
-        Node<T>* temp = head;
-        head = head->next;
-        if (head == nullptr) { // If the deque is now empty
-            tail = nullptr;
-        } else {
-            head->prev = nullptr;
-        }
-        delete temp;
-        --length;
-    }
+   assert(nc.infixToPrefix(infix1) == "+ A B");
+   cout<<"Test 1 passed"<<endl;
+   assert(nc.infixToPrefix(infix2) == "* + X B - Y D");
+   cout<<"Test 2 passed"<<endl;
+   assert(nc.infixToPrefix(infix3) == "- / + A B + X Y R");
+   cout<<"Test 3 passed"<<endl;
 
-    // Removes the last element of the deque
-    void pop_back() {
-        if (tail == nullptr) return; // If deque is empty, do nothing
-        Node<T>* temp = tail;
-        tail = tail->prev;
-        if (tail == nullptr) { // If the deque is now empty
-            head = nullptr;
-        } else {
-            tail->next = nullptr;
-        }
-        delete temp;
-        --length;
-    }
 
-    // Returns the first element of the deque
-    T front_item() {
-        return head->data;
-    }
 
-    // Returns the last element of the deque
-    T back_item() {
-        return tail->data;
-    }
+   assert(nc.infixToPostfix(infix1) == "A B +");
+   cout<<"Test 4 passed"<<endl;
+   assert(nc.infixToPostfix(infix2) == "X B + Y D - *");
+   cout<<"Test 5 passed"<<endl;
+   assert(nc.infixToPostfix(infix3) == "A B + X Y + / R -");
+   cout<<"Test 6 passed"<<endl;
 
-    // Clears the deque
-    void clear() {
-        while (head != nullptr) {
-            Node<T>* temp = head;
-            head = head->next;
-            delete temp;
-        }
-        tail = nullptr;
-        length = 0;
-    }
 
-    // Returns the size of the deque
-    int size() {
-        return length;
-    }
+  assert(nc.prefixToPostfix(prefix1) == "x y * g / h +");
+  cout<<"Test 7 passed"<<endl;
+  assert(nc.prefixToPostfix(prefix2) == "x y / g -");
+  cout<<"Test 8 passed"<<endl;
+  assert(nc.prefixToPostfix(prefix3) == "x y / a b * -");
+  cout<<"Test 9 passed"<<endl;
 
-    // Returns true if the deque is empty
-    bool empty() {
-        return length == 0;
-    }
-};
 
-// ==========================
-// NotationConverter Class
-// ==========================
-class NotationConverter : public NotationConverterInterface {
-private:
-    // Returns true if the character is an operand (A-Z, a-z)
-    bool isOperand(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-    }
+  assert(nc.prefixToInfix(prefix1) == "(((x * y) / g) + h)");
+  cout<<"Test 10 passed"<<endl;
+  assert(nc.prefixToInfix(prefix2) == "((x / y) - g)");
+  cout<<"Test 11 passed"<<endl;
+  assert(nc.prefixToInfix(prefix3) ==  "((x / y) - (a * b))");
+  cout<<"Test 12 passed"<<endl;
 
-    // Returns true if the character is an operator (+, -, *, /)
-    bool isOperator(char c) {
-        return (c == '+' || c == '-' || c == '*' || c == '/');
-    }
 
-public:
-    // Converts postfix expression to infix
-    std::string postfixToInfix(std::string inStr) {
-        using std::deque;
-        deque<std::string> d;
+  assert(nc.postfixToInfix(postfix1) =="((X + Y) * (A + B))");
+  cout<<"Test 13 passed"<<endl;
+  assert(nc.postfixToInfix(postfix2) =="(V + C)");
+  cout<<"Test 14 passed"<<endl;
+  assert(nc.postfixToInfix(postfix3) =="((H * W) / (R - Q))");
+  cout<<"Test 15 passed"<<endl;
 
-        for (int i = 0; i < inStr.length(); i++) {
-            if (isOperand(inStr[i])) {
-                d.push_back(std::string(1, inStr[i]));
-            } else if (isOperator(inStr[i])) {
-                std::string op2 = d.back(); d.pop_back();
-                std::string op1 = d.back(); d.pop_back();
-                std::string temp = "(" + op1 + " " + inStr[i] + " " + op2 + ")";
-                d.push_back(temp);
-            }
-        }
-        return d.back();
-    }
 
-    // Converts postfix to prefix by first converting to infix
-    std::string postfixToPrefix(std::string inStr) {
-        return infixToPrefix(postfixToInfix(inStr));
-    }
+   assert(nc.postfixToPrefix(postfix1) =="* + X Y + A B");
+   cout<<"Test 16 passed"<<endl;
+   assert(nc.postfixToPrefix(postfix2) =="+ V C");
+   cout<<"Test 17 passed"<<endl;
+   assert(nc.postfixToPrefix(postfix3) =="/ * H W - R Q");
+   cout<<"Test 18 passed"<<endl;
+  
+  printf("All test cases passed!\n");
 
-    // Converts infix to postfix
-    std::string infixToPostfix(std::string inStr) {
-        using std::deque;
-        deque<std::string> d;
-
-        for (int i = inStr.size() - 1; i >= 0; --i) {
-            std::string temp(1, inStr[i]);
-            if (temp == " ") continue;
-            if (temp == ")") d.push_front(temp);
-            else if (temp == "(") {
-                while (!d.empty() && d.front() != ")") {
-                    std::string op = d.front(); d.pop_front();
-                    std::string op1 = d.back(); d.pop_back();
-                    std::string op2 = d.back(); d.pop_back();
-                    d.push_back(op1 + " " + op2 + " " + op);
-                }
-                if (!d.empty() && d.front() == ")") d.pop_front();
-            } else if (isOperand(temp[0])) d.push_back(temp);
-            else if (isOperator(temp[0])) d.push_front(temp);
-        }
-        return d.back();
-    }
-
-    // Converts infix to prefix
-    std::string infixToPrefix(std::string inStr) {
-        return infixToPostfix(inStr); // Prefix is handled similarly
-    }
-
-    // Converts prefix to infix
-    std::string prefixToInfix(std::string inStr) {
-        return postfixToInfix(prefixToPostfix(inStr));
-    }
-
-    // Converts prefix to postfix
-    std::string prefixToPostfix(std::string inStr) {
-        using std::deque;
-        deque<std::string> d;
-
-        for (int i = inStr.size() - 1; i >= 0; i--) {
-            std::string temp(1, inStr[i]);
-            if (temp == " ") continue;
-
-            if (isOperand(temp[0])) d.push_front(temp);
-            else if (isOperator(temp[0])) {
-                std::string op1 = d.front(); d.pop_front();
-                std::string op2 = d.front(); d.pop_front();
-                d.push_front(op1 + " " + op2 + " " + temp);
-            }
-        }
-        return d.front();
-    }
-};
+}
